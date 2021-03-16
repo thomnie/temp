@@ -1,36 +1,24 @@
-#include "functions.h"
 #include <cstring>
 #include <string.h>
 #include "mbed.h"
-#include <math.h>
-#include <cstdio>
+#include "nsapi_types.h"
 
-const char* return_temp(float temperature){
-    static char json_return[50];
-    snprintf(json_return, sizeof(json_return), "{\"Temperature\": %.1f}", temperature);
-    return json_return;
-}
+#include "functions.h"
 
-const char* return_hum(float humidity){
-    static char json_return[50];
-    snprintf(json_return, sizeof(json_return), "{\"Humidity\": %.1f}", humidity);
-    return json_return;
-}
+NetworkInterface *network = NetworkInterface::get_default_instance();
+TCPSocket socket;
+nsapi_size_or_error_t result = network->connect();
 
-void connect(float temperature, float humidity){
-    // Get pointer to default network interface
-    NetworkInterface *network = NetworkInterface::get_default_instance();
+
+void connect_network(){
 
     if (!network) {
       printf("Failed to get default network interface\n");
       while (1);
     }
 
-    // Connect to network
     printf("\nConnecting to the network...\n");
-    nsapi_size_or_error_t result = network->connect();
 
-    // Check if the connection is successful
     if (result != 0) {
         printf("Failed to connect to network: %d\n", result);
         while(1);
@@ -38,11 +26,12 @@ void connect(float temperature, float humidity){
 
     printf("Connection to network successful!\n");
 
-    // Create and allocate resources for socket
-    TCPSocket socket;
+}
+
+void connect_server(){
+
     socket.open(network);
 
-    // Create destination address
     SocketAddress address;
 
     // Get IP address of host by name
@@ -56,13 +45,10 @@ void connect(float temperature, float humidity){
 
     printf("Got address of host\n");
 
-    // Set server port number
     address.set_port(9090);
 
-    // Connect to server at the given address
     result = socket.connect(address);
 
-    // Check result
     if (result != 0) {
         printf("Failed to connect to server: %d\n", result);
         while(1);
@@ -70,20 +56,41 @@ void connect(float temperature, float humidity){
 
     printf("Connection to server successful!\n");
 
-    // Send a simple http request
     char sbuffer[] =    "POST /api/v1/3977STDkNIUXJYXmqiuG/telemetry HTTP/1.1\r\n"
                         "Host: 10.0.0.89\r\n"
                         "Content-Type: application/json\r\n"
                         "\r\n";
-    int scount = socket.send(sbuffer, sizeof sbuffer);
-    printf("sent %d [%.*s]\n", scount, strstr(sbuffer, "\r\n") - sbuffer, sbuffer);
-
-
-    int post_temp = socket.send(return_temp(temperature), sizeof(return_temp(temperature)));
-    int post_hum = socket.send(return_temp(temperature), sizeof(return_temp(temperature)));
-    printf("sent %d\n", post_temp);
-    printf("%s\n%s\n", return_temp(temperature), return_hum(humidity));
-
-    socket.close();
-    network->disconnect();
+    nsapi_size_t bytes_to_send = strlen(sbuffer);
+    nsapi_size_or_error_t scount = 0;
+    while(bytes_to_send){
+        scount = socket.send(sbuffer + scount, bytes_to_send);
+        if(scount < 0) 
+            while(1);
+        else
+            printf("sent %d [%.*s]\n", scount, strstr(sbuffer, "\r\n") - sbuffer, sbuffer);
+        
+        bytes_to_send -= scount;
+    }
 }
+
+
+void post(float temperature, float humidity){
+    char temp_post[50];
+    char hum_post[50];   
+    snprintf(temp_post, sizeof(temp_post), "{\"Temperature\": %.1f}", temperature);
+    snprintf(hum_post, sizeof(hum_post), "{\"Humidity\": %.1f}", humidity);
+
+    int temp_int_sent = socket.send(temp_post, strlen(temp_post));
+    int hum_int_sent = socket.send(hum_post, strlen(hum_post));
+
+    // output: sent 21 & 18 (most of the time)
+    printf("sent %d & %d\n", temp_int_sent, hum_int_sent);
+    
+    socket.close();
+}
+
+void close_server(){
+    socket.close();
+    // network->disconnect();
+}
+

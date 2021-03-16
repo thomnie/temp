@@ -5,19 +5,36 @@
 
 #include "functions.h"
 
+Timer timer;
+
 int main()
 {
     float temperature, humidity;
+    timer.start();
+
     DevI2C i2c(PB_11, PB_10);
     HTS221Sensor sensor(&i2c);
 
     sensor.init(nullptr);
     sensor.enable();
+    
+    connect_network();
+    
+    while (1) {
+        if(timer.read_ms() >= 5000){
+            sensor.get_temperature(&temperature);
+            sensor.get_humidity(&humidity);
+            
+            connect_server();
+            
+            // output: sent 21 & 18
+            post(temperature, humidity);
 
-    sensor.get_temperature(&temperature);
-    sensor.get_humidity(&humidity);
+            close_server();
 
-    connect(temperature, humidity);
-
+            timer.reset();
+        }
+    }
 }
+
 
