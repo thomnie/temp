@@ -7,7 +7,7 @@
 
 int main()
 {
-    float temperature;
+    float temperature, humidity;
     DevI2C i2c(PB_11, PB_10);
     HTS221Sensor sensor(&i2c);
 
@@ -15,8 +15,9 @@ int main()
     sensor.enable();
 
     sensor.get_temperature(&temperature);
+    sensor.get_humidity(&humidity);
 
-    connect();
+    connect(temperature, humidity);
 
 }
 

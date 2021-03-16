@@ -2,9 +2,22 @@
 #include <cstring>
 #include <string.h>
 #include "mbed.h"
+#include <math.h>
 #include <cstdio>
 
-void connect(){
+const char* return_temp(float temperature){
+    static char json_return[50];
+    snprintf(json_return, sizeof(json_return), "{\"Temperature\": %.1f}", temperature);
+    return json_return;
+}
+
+const char* return_hum(float humidity){
+    static char json_return[50];
+    snprintf(json_return, sizeof(json_return), "{\"Humidity\": %.1f}", humidity);
+    return json_return;
+}
+
+void connect(float temperature, float humidity){
     // Get pointer to default network interface
     NetworkInterface *network = NetworkInterface::get_default_instance();
 
@@ -61,17 +74,16 @@ void connect(){
     char sbuffer[] =    "POST /api/v1/3977STDkNIUXJYXmqiuG/telemetry HTTP/1.1\r\n"
                         "Host: 10.0.0.89\r\n"
                         "Content-Type: application/json\r\n"
-                        "Content-Length: 22\r\n"
                         "\r\n";
     int scount = socket.send(sbuffer, sizeof sbuffer);
     printf("sent %d [%.*s]\n", scount, strstr(sbuffer, "\r\n") - sbuffer, sbuffer);
 
-    char http_post[] = "{\"Temperature\": 40.1}";
 
-    int post_int = socket.send(http_post, sizeof http_post);
-    printf("sent %d\n", post_int);
+    int post_temp = socket.send(return_temp(temperature), sizeof(return_temp(temperature)));
+    int post_hum = socket.send(return_temp(temperature), sizeof(return_temp(temperature)));
+    printf("sent %d\n", post_temp);
+    printf("%s\n%s\n", return_temp(temperature), return_hum(humidity));
 
     socket.close();
     network->disconnect();
-
 }

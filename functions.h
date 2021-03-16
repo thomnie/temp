@@ -1,1 +1,1 @@
-void connect();
+void connect(float temperature, float humidity);
