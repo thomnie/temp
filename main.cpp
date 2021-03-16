@@ -1,7 +1,5 @@
-#include "ThisThread.h"
 #include "mbed.h"
 #include <HTS221Sensor.h>
-#include <cstdio>
 
 #include "functions.h"
 
@@ -25,13 +23,9 @@ int main()
             sensor.get_temperature(&temperature);
             sensor.get_humidity(&humidity);
             
-            connect_server();
-            
-            // output: sent 21 & 18
-            post(temperature, humidity);
-
-            close_server();
-
+            connect_server(temperature, humidity);
+            printf("Temperature: %.1f\nHumidity: %.1f\n\n", temperature, humidity);
+            close_server();       
             timer.reset();
         }
     }
