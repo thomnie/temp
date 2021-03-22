@@ -4,7 +4,7 @@
         "platform.minimal-printf-enable-floating-point": true,
         "nsapi.default-wifi-security": "WPA_WPA2",
         "nsapi.default-wifi-ssid": "\"Telenor7866sot\"",
-        "nsapi.default-wifi-password": "\"upfvyzxugfsiw\"",
+        "nsapi.default-wifi-password": "\"<password>\"",
         "rtos.main-thread-stack-size": 8192
       },
         "DISCO_L475VG_IOT01A": {
